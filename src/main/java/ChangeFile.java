@@ -97,13 +97,15 @@ public class ChangeFile {
             // System.out.println("message body: " + popMsg.getMessageBodyAsRawString ());
             //System.out.println("message dequeue count:" + popMsg.getDequeueCount());
             for (int i = 0; i < threadNum; i++) {
-                new Thread(()->{
+                new Thread(() -> {
                     while (true) {
 
-                        CloudQueue queue = client.getQueueRef(config.getProperty("queue_ref"));
-                        Message popMsg = queue.popMessage();
-
+                        CloudQueue queue = null;
+                        Message popMsg = null;
                         try {
+                            queue = client.getQueueRef(config.getProperty("queue_ref"));
+                            popMsg = queue.popMessage();
+
                             if (popMsg != null) {
                                 new Parse(popMsg.getMessageBodyAsString());
                                 queue.deleteMessage(popMsg.getReceiptHandle());
@@ -136,6 +138,7 @@ public class ChangeFile {
                         } catch (Exception e) {
                             System.out.println("Unknown exception happened!");
                             e.printStackTrace();
+                            return;
                         }
                     }
                 }).start();
@@ -144,6 +147,8 @@ public class ChangeFile {
         } catch (ClientException ce) {
             System.out.println("ClientException:" + ce.getCause().getMessage());
             ce.printStackTrace();
+            System.exit(1);
+
         } catch (ServiceException se) {
             logger.error("MNS exception requestId:" + se.getRequestId(), se);
             if (se.getErrorCode() != null) {
@@ -152,6 +157,8 @@ public class ChangeFile {
                 } else if (se.getErrorCode().equals("TimeExpired")) {
                     System.out.println("The request is time expired. Please check your local machine timeclock");
                 }
+                System.exit(1);
+
             }
             se.printStackTrace();
         } catch (Exception e) {
@@ -174,6 +181,7 @@ public class ChangeFile {
         ossClient = new OSSClientBuilder().build(oss_end_point, account_id, account_key);
 
 
+        //[event[0][oss][obejct][key]
         String test = "{\"events\": [{\n" +
                 "            \"eventName\": \"ObjectCreated:PostObject\",\n" +
                 "            \"eventSource\": \"acs:oss\",\n" +
