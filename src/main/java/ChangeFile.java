@@ -98,7 +98,6 @@ public class ChangeFile {
             //System.out.println("message dequeue count:" + popMsg.getDequeueCount());
             for (int i = 0; i < threadNum; i++) {
                 new Thread(() -> {
-                    while (true) {
 
                         CloudQueue queue = null;
                         Message popMsg = null;
@@ -118,6 +117,8 @@ public class ChangeFile {
 
                             if (oe.getErrorCode() != null) {
                                 if (oe.getErrorCode().equals("NoSuchKey")) {
+                                    assert queue != null;
+                                    assert popMsg != null;
                                     queue.deleteMessage(popMsg.getReceiptHandle());
                                 } else {
                                     System.out.println("OSSException:" + oe.getErrorCode());
@@ -129,6 +130,8 @@ public class ChangeFile {
                         } catch (ServiceException se) {
                             if (se.getErrorCode() != null) {
                                 if (se.getErrorCode().equals("MessageNotExist")) {
+                                    assert queue != null;
+                                    assert popMsg != null;
                                     queue.deleteMessage(popMsg.getReceiptHandle());
                                 } else {
                                     System.out.println("ServiceException:" + se.getErrorCode());
@@ -140,8 +143,9 @@ public class ChangeFile {
                             e.printStackTrace();
                             return;
                         }
-                    }
                 }).start();
+
+                Thread.sleep(5000);
                 System.out.println("create thread: " + i);
             }
         } catch (ClientException ce) {
@@ -165,6 +169,7 @@ public class ChangeFile {
             System.out.println("Unknown exception happened!");
             e.printStackTrace();
         }
+        System.exit(1);
 
     }
 
@@ -196,7 +201,7 @@ public class ChangeFile {
                 "                \"object\": {\n" +
                 "                    \"deltaSize\": 807102,\n" +
                 "                    \"eTag\": \"2C7AA112DF362FABFC5179F5CD301E92\",\n" +
-                "                    \"key\": \"uploads/201911/jpg/2c7aa112df362fabfc5179f5cd301e92.jpg\",\n" +
+                "                    \"key\": \"gres/648712465_1.0.0/files/assets/27604573/1/image (13).png\",\n" +
                 "                    \"size\": 807102},\n" +
                 "                \"ossSchemaVersion\": \"1.0\",\n" +
                 "                \"ruleId\": \"change-file\"},\n" +

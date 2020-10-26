@@ -52,6 +52,8 @@ class Parse {
 
 
     private void syncFile(String action, String key) throws IOException {
+        //处理空格
+//        key = key.replace(" ", "\\ ");
         switch (action) {
             case "ObjectCreated:PostObject":
             case "ObjectCreated:PutObject":
@@ -62,11 +64,12 @@ class Parse {
                 break;
             case "ObjectRemoved:DeleteObject":
             case "ObjectRemoved:DeleteObjects":
-                String cmd = gsutil_cmd + " rm gs://" + gcs_bucket + "/" + key;
+
+                String cmd = " rm \"gs://" + gcs_bucket + "/" + key + "\"";
                 rumCmd(cmd);
                 break;
             case "ObjectCreated:CopyObject":
-                cmd = gsutil_cmd + " cp gs://" + gcs_bucket + "/" + key;
+                cmd =  " cp \"gs://" + gcs_bucket + "/" + key + "\"";
                 rumCmd(cmd);
                 break;
         }
@@ -82,6 +85,9 @@ class Parse {
         if (!file.isDirectory()) {
             file.mkdirs();
         }
+
+
+//        String key2 = key.replace(" ", "\\ ");
 
         File file_path = new File(key);
 
@@ -130,10 +136,15 @@ class Parse {
             String basePath = file.getCanonicalPath();
             System.out.println(basePath);
 
-            String cmd = gsutil_cmd + " cp " + basePath + "/" + key + " gs://" + gcs_bucket + "/" + key;
+            //进行空格替换
+
+            String key2 = key.replace(" ", "\\ ");
+            key2 = key2.replace("(","\\(");
+            key2 = key2.replace(")","\\)");
+            String cmd =  " cp " + basePath + "/" + key2 + " \"gs://" + gcs_bucket + "/" + key+"\"";
             rumCmd(cmd);
             setMime(key);
-            clean(key);
+//            clean(key);
 
         } catch (IOException e) {
             System.out.println("命令执行失败:" + e.getCause().getMessage());
@@ -148,7 +159,7 @@ class Parse {
         BufferedReader br = null;
 
         try {
-            p = Runtime.getRuntime().exec(cmd);
+            p = Runtime.getRuntime().exec(new String[] {"/bin/bash","-c",gsutil_cmd + cmd});
             String line;
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -180,7 +191,7 @@ class Parse {
 
     private void setMime(String key) {
         String suffix = key.substring(key.lastIndexOf(".") + 1).toLowerCase();
-        String[] suffix_defined = {"png", "jpg", "js", "html"};
+        String[] suffix_defined = {"png", "jpg", "js", "html", "png-resize", "png-mini"};
 
         if (Arrays.binarySearch(suffix_defined, suffix) > -1) {
 
@@ -191,10 +202,13 @@ class Parse {
                     break;
 
                 case "png":
+                case "png-resize":
+                case "png-mini":
                     mime = "content-type:image/png";
                     break;
+
                 case "js":
-                    mime = "content-type:application/json";
+                    mime = "content-type:text/javascript";
                     break;
 
                 case "html":
@@ -202,7 +216,7 @@ class Parse {
                     break;
             }
 
-            String cmd = gsutil_cmd + " -m setmeta -h " + mime + " gs://" + gcs_bucket + "/" + key;
+            String cmd =  " -m setmeta -h " + mime + " \"gs://" + gcs_bucket + "/" + key+"\"";
             rumCmd(cmd);
         }
 
