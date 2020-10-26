@@ -110,7 +110,7 @@ public class ChangeFile {
                                 queue.deleteMessage(popMsg.getReceiptHandle());
                                 System.out.println(Thread.currentThread().getName() + " 删除消息:" + popMsg.getReceiptHandle());
                             } else {
-                                Thread.sleep(2000);
+                                Thread.sleep(1000);
                             }
 
                         } catch (OSSException oe) {
@@ -145,7 +145,7 @@ public class ChangeFile {
                         }
                 }).start();
 
-                Thread.sleep(5000);
+                Thread.sleep(2000);
                 System.out.println("create thread: " + i);
             }
         } catch (ClientException ce) {
